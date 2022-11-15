@@ -843,3 +843,4 @@ config >/dev/null | tee -a /tmp/cdnwaf.log && start | tee -a /tmp/cdnwaf.log &
 shell_bar && printf "完成 \n"
 
 install_end
+
