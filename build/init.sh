@@ -60,20 +60,30 @@ if  [[ "${DISTRO}" = 'CentOS' && "${RHEL_Ver}" = '7' ]];then
       SYS_VER="centos-7"
       clear
       echo "系统 $SYS_VER , 正在安装cdnwaf主控，请稍等………………"
-      rpm -q epel-release &> /dev/null || yum install epel-release -y >/dev/null |grep -v 'Error'
+      rpm -q epel-release &> /dev/null || yum install epel-release -y 2&>/dev/null |grep -v 'Error'
       rpm -q jq &> /dev/null || yum install jq -y 2&>/dev/null |grep -v 'Error'
-      rpm -q curl &> /dev/null || yum install curl -y >/dev/null  |grep -v 'Error'
-      rpm -q tee &> /dev/null || yum install tee -y >/dev/null |grep -v 'Error'
+      rpm -q curl &> /dev/null || yum install curl -y 2&>/dev/null  |grep -v 'Error'
+      rpm -q tee &> /dev/null || yum install tee -y 2&>/dev/null |grep -v 'Error'
 
       CODE=$1
       CODEDIR='/tmp/.cdnwaf.json'
-      curl -s "http://yapi.spstak.vip/mock/18/cdnwaf/auth?code=$CODE?verify=www.cdnwaf.cn" |jq > /tmp/.cdnwaf.json
+      curl -s "http://yapi.spstak.vip/mock/18/cdnwaf/auth?code=$CODE?verify=www.cdnwaf.cc" |jq > /tmp/.cdnwaf.json
       CODE_STATUS=$([ ! -z $CODE ] && echo ok || echo null)
       CDN_STATUS=$(cat $CODEDIR  |jq -r .status)
+      MA_IP=$(cat $CODEDIR |jq -r .IP)
+      local_ip=$(curl -s cip.cc|awk '/IP/ {print$3}')
+      
+      if [ "$local_ip" != "$MA_IP" ];then
+          clear
+          echo "请发送邮件，绑定主控外网ip"
+          echo "主题：绑定主控外网ip"
+          echo "内容：主控外网ip：$local_ip" 
+          echo "发送到邮箱：cdnwaf@outlook.com"
+          exit 1
+      fi
 
       if [[ "$CODE_STATUS" == "ok" && "$CDN_STATUS" == "ok" ]]; then
            echo "cdnwaf 授权码 正确" && sleep 3
-           MA_IP=$(cat $CODEDIR |jq -r .IP)
            ES_PASS=$(cat $CODEDIR |jq -r .EP)
            DNS_IP=$(cat $CODEDIR |jq -r .dns)
            ES_DIR=$(cat $CODEDIR |jq -r .ED)
